@@ -14,13 +14,13 @@
 #define FIFO_NAME "myfifo"
 #define LOG_NAME "log.txt"
 #define SIGFILE_NAME "signals.txt"
-#define BUFFER_SIZE 50
+#define BUFFER_SIZE 300
 
 
 void Signal_receive(int sig)
 {
-    FILE *Sp;
-    /* Open signals.txt */
+  FILE *Sp;
+  /* Open signals.txt */
 	printf("saving in signals.txt...\n");
 	if ( (Sp = fopen(SIGFILE_NAME, "a") ) == NULL )
     {
@@ -30,17 +30,17 @@ void Signal_receive(int sig)
   
     if (sig==SIGUSR1)
     {
-        printf("saving SIGN:1 \n");
+        printf("SIGN:1 \n");
         fprintf(Sp,"SIGN:1 \n");
-        //fclose(Sp);
     }
 
     if (sig==SIGUSR2)
     {
-        printf("saving SIGN:2 \n");
+        printf("SIGN:2 \n");
         fprintf(Sp,"SIGN:2 \n");
-        //fclose(Sp);
-    }     
+    }
+    fclose(Sp);
+
 }
 
 int main(void)
@@ -53,12 +53,13 @@ int main(void)
 	struct sigaction sa;
 	sa.sa_handler = Signal_receive;
 	//sa.sa_flags = 0; //SA_RESTART;
-	//sigemptyset(&sa.sa_mask);
+	sigemptyset(&sa.sa_mask);
     sigaction(SIGUSR1,&sa,NULL);
     sigaction(SIGUSR2,&sa,NULL);
  
     pid=getpid();      //Process ID of itself
     printf("el pid es:  %d  \n", pid);
+
 
     /* Open log.txt */
 	printf("opening log.txt...\n");
@@ -89,18 +90,20 @@ int main(void)
     /* Loop until read syscall returns a value <= 0 */
 	do
 	{
-                /* read data into local buffer */
+
+        
+        /* read data into local buffer */
 		if ((bytesRead = read(fd, inputBuffer, BUFFER_SIZE)) == -1)
         {
-			printf("saving the World");
-            perror("read");
+			perror("read");
         }
         else
 		{
 			inputBuffer[bytesRead] = '\0';
 			printf("saving in log %s \n", inputBuffer);
             if (bytesRead != 0)
-                fprintf(fp,"DATA:%s \n", inputBuffer);    
+                fprintf(fp,"DATA:%s \n", inputBuffer);
+                
 		}
 	}
 	while (bytesRead > 0);
