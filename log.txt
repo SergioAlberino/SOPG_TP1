@@ -1,0 +1,6 @@
+DATA:prueba1 
+DATA:prueba2 
+DATA:ahora va señal 
+DATA:ahora texto 
+DATA:ahora otra señal 
+DATA:otro texto mas despues de señal 

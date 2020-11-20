@@ -8,66 +8,23 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <signal.h>
-#include <unistd.h>
-#include <signal.h>
+
+
 
 #define FIFO_NAME "myfifo"
 #define LOG_NAME "log.txt"
 #define SIGFILE_NAME "signals.txt"
 #define BUFFER_SIZE 300
-
-
-void Signal_receive(int sig)
-{
-  FILE *Sp;
-  /* Open signals.txt */
-	printf("saving in signals.txt...\n");
-	if ( (Sp = fopen(SIGFILE_NAME, "a") ) == NULL )
-    {
-        printf("Error opening signal file \n");
-        exit(1);
-    }
-  
-    if (sig==SIGUSR1)
-    {
-        printf("SIGN:1 \n");
-        fprintf(Sp,"SIGN:1 \n");
-    }
-
-    if (sig==SIGUSR2)
-    {
-        printf("SIGN:2 \n");
-        fprintf(Sp,"SIGN:2 \n");
-    }
-    fclose(Sp);
-
-}
+#define AUX_SIZE 5
 
 int main(void)
 {
 	uint8_t inputBuffer[BUFFER_SIZE];
+    char aux[AUX_SIZE];
 	int32_t bytesRead, returnCode, fd;
     FILE *fp;
-    pid_t pid;
-
-	struct sigaction sa;
-	sa.sa_handler = Signal_receive;
-	//sa.sa_flags = 0; //SA_RESTART;
-	sigemptyset(&sa.sa_mask);
-    sigaction(SIGUSR1,&sa,NULL);
-    sigaction(SIGUSR2,&sa,NULL);
- 
-    pid=getpid();      //Process ID of itself
-    printf("el pid es:  %d  \n", pid);
-
-
-    /* Open log.txt */
-	printf("opening log.txt...\n");
-	if ( (fp = fopen(LOG_NAME, "a") ) == NULL )
-    {
-        printf("Error opening log file: %d\n", fd);
-        exit(1);
-    }
+    FILE *Sp;
+    
 
     /* Create named fifo. -1 means already exists so no action if already exists */
     if ( (returnCode = mknod(FIFO_NAME, S_IFIFO | 0666, 0) ) < -1  )
@@ -91,7 +48,6 @@ int main(void)
 	do
 	{
 
-        
         /* read data into local buffer */
 		if ((bytesRead = read(fd, inputBuffer, BUFFER_SIZE)) == -1)
         {
@@ -100,10 +56,53 @@ int main(void)
         else
 		{
 			inputBuffer[bytesRead] = '\0';
-			printf("saving in log %s \n", inputBuffer);
-            if (bytesRead != 0)
-                fprintf(fp,"DATA:%s \n", inputBuffer);
-                
+             
+            
+            if(inputBuffer[0]==68)             
+            {
+                printf("Data Received \n");
+                printf("Receive: %s \n", inputBuffer);
+                // if (bytesRead != 0)
+                {   
+                    /* Open log.txt */
+	                printf("saving in log.txt...\n");
+	                if ( (fp = fopen(LOG_NAME, "a") ) == NULL )
+                    {
+                        printf("Error opening log file: %d\n", fd);
+                        exit(1);
+                    }
+                     /* Save in log.txt */                           
+                    fprintf(fp,"%s \n", inputBuffer);
+                    /* Close log.txt */    
+                    fclose(fp);
+                }   
+
+            }
+            else
+            {
+                if(inputBuffer[0]==83)             
+                    printf("Signal Received \n");
+                    printf("Receive: %s \n", inputBuffer);
+                        // if (bytesRead != 0)
+                        {   
+                            /* Open signal.txt */
+                            printf("saving in signal.txt...\n");
+                            if ( (Sp = fopen(SIGFILE_NAME, "a") ) == NULL )
+                            {
+                                printf("Error opening signal file \n");
+                                exit(1);
+                            }
+                            /* Save in signal.txt */                           
+                            fprintf(Sp,"%s \n", inputBuffer);
+                            /* Close signal.txt */    
+                            fclose(Sp);
+                        }   
+            }
+    
+            
+
+
+            
 		}
 	}
 	while (bytesRead > 0);
@@ -111,3 +110,10 @@ int main(void)
 	return 0;
 }
 
+	// if ( (Sp = fopen(SIGFILE_NAME, "a") ) == NULL )
+    // {
+    //     printf("Error opening signal file \n");
+    //     exit(1);
+    // }
+            // fprintf(Sp,"SIGN:1 \n");
+                // fclose(Sp);
